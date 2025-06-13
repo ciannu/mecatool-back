@@ -2,7 +2,7 @@ package com.svf.mecatool.config;
 
 import com.svf.mecatool.integration.repositories.UserRepository;
 import com.svf.mecatool.security.details.CustomUserDetails;
-import com.svf.mecatool.security.jwt.JwtAuthenticationFilter;
+import com.svf.mecatool.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -33,13 +33,17 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@RequiredArgsConstructor
 public class SecurityConfig {
 
     private final UserRepository userRepository;
     private final ApplicationContext applicationContext;
-    private final JwtAuthenticationFilter jwtAuthFilter;
     private final AuthenticationProvider authenticationProvider;
+
+    public SecurityConfig(UserRepository userRepository, ApplicationContext applicationContext, AuthenticationProvider authenticationProvider) {
+        this.userRepository = userRepository;
+        this.applicationContext = applicationContext;
+        this.authenticationProvider = authenticationProvider;
+    }
 
     @Bean
     public UserDetailsService userDetailsService() {
@@ -79,6 +83,11 @@ public class SecurityConfig {
     }
 
     @Bean
+    public JwtAuthenticationFilter jwtAuthenticationFilter() {
+        return new JwtAuthenticationFilter();
+    }
+
+    @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -94,7 +103,7 @@ public class SecurityConfig {
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
                 .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 

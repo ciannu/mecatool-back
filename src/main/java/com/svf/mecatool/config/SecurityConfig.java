@@ -45,9 +45,19 @@ public class SecurityConfig {
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> userRepository.findByEmail(username)
-                .map(CustomUserDetails::new)
-                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
+        return username -> {
+            System.out.println("\n=== UserDetailsService ===");
+            System.out.println("Attempting to load user by email (case-insensitive): " + username);
+            return userRepository.findByEmailIgnoreCase(username)
+                    .map(user -> {
+                        System.out.println("Found user: " + user.getEmail());
+                        return new CustomUserDetails(user);
+                    })
+                    .orElseThrow(() -> {
+                        System.out.println("User not found for email: " + username);
+                        return new UsernameNotFoundException("User not found");
+                    });
+        };
     }
 
     @Bean

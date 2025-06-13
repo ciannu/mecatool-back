@@ -2,7 +2,7 @@ package com.svf.mecatool.config;
 
 import com.svf.mecatool.integration.repositories.UserRepository;
 import com.svf.mecatool.security.details.CustomUserDetails;
-import com.svf.mecatool.security.JwtAuthenticationFilter;
+import com.svf.mecatool.security.jwt.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;

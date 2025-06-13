@@ -4,10 +4,9 @@ import com.svf.mecatool.integration.repositories.UserRepository;
 import com.svf.mecatool.security.details.CustomUserDetails;
 import com.svf.mecatool.security.jwt.JwtAuthenticationFilter;
 import com.svf.mecatool.security.jwt.JwtService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
@@ -15,7 +14,6 @@ import org.springframework.security.config.annotation.authentication.configurati
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
-import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -26,10 +24,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.springframework.http.HttpMethod;
 
 import java.util.Arrays;
-import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -37,36 +33,18 @@ import java.util.List;
 public class SecurityConfig {
 
     private final UserRepository userRepository;
-    private final ApplicationContext applicationContext;
-    private final AuthenticationProvider authenticationProvider;
     private final JwtService jwtService;
-    private final UserDetailsService userDetailsService;
 
-    public SecurityConfig(UserRepository userRepository, ApplicationContext applicationContext, AuthenticationProvider authenticationProvider, JwtService jwtService, UserDetailsService userDetailsService) {
+    public SecurityConfig(UserRepository userRepository, JwtService jwtService) {
         this.userRepository = userRepository;
-        this.applicationContext = applicationContext;
-        this.authenticationProvider = authenticationProvider;
         this.jwtService = jwtService;
-        this.userDetailsService = userDetailsService;
     }
 
     @Bean
     public UserDetailsService userDetailsService() {
-        return username -> {
-            System.out.println("\n=== UserDetailsService ===");
-            System.out.println("Loading user by email: " + username);
-            return userRepository.findByEmail(username)
-                    .map(user -> {
-                        System.out.println("Found user: " + user.getEmail());
-                        System.out.println("User role: " + user.getRole().getName());
-                        System.out.println("User password from DB: " + user.getPassword());
-                        return new CustomUserDetails(user);
-                    })
-                    .orElseThrow(() -> {
-                        System.out.println("User not found: " + username);
-                        return new UsernameNotFoundException("User not found");
-                    });
-        };
+        return username -> userRepository.findByEmail(username)
+                .map(CustomUserDetails::new)
+                .orElseThrow(() -> new UsernameNotFoundException("User not found"));
     }
 
     @Bean
@@ -89,26 +67,27 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter(jwtService, userDetailsService);
+        return new JwtAuthenticationFilter(jwtService, userDetailsService());
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-                .csrf(csrf -> csrf.disable())
-                .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/auth/**").permitAll()
-                        .requestMatchers("/roles/**").hasRole("ADMIN")
-                        .requestMatchers("/users/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-                )
-                .authenticationProvider(authenticationProvider)
-                .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            .csrf(csrf -> csrf.disable())
+            .authorizeHttpRequests(auth -> auth
+                .requestMatchers("/auth/**").permitAll()
+                .requestMatchers("/roles/**").hasRole("ADMIN")
+                .requestMatchers("/users/**").hasRole("ADMIN")
+                .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                .anyRequest().authenticated()
+            )
+            .sessionManagement(session -> session
+                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+            )
+            .authenticationProvider(authenticationProvider())
+            .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);
+
         return http.build();
     }
 
@@ -116,8 +95,8 @@ public class SecurityConfig {
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         configuration.setAllowedOrigins(Arrays.asList(
-                "http://localhost:4200",
-                "https://mecatool-front.onrender.com"
+            "http://localhost:4200",
+            "https://mecatool-front.onrender.com"
         ));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));

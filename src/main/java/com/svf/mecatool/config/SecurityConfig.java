@@ -3,6 +3,7 @@ package com.svf.mecatool.config;
 import com.svf.mecatool.integration.repositories.UserRepository;
 import com.svf.mecatool.security.details.CustomUserDetails;
 import com.svf.mecatool.security.jwt.JwtAuthenticationFilter;
+import com.svf.mecatool.security.jwt.JwtService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Bean;
@@ -38,11 +39,15 @@ public class SecurityConfig {
     private final UserRepository userRepository;
     private final ApplicationContext applicationContext;
     private final AuthenticationProvider authenticationProvider;
+    private final JwtService jwtService;
+    private final UserDetailsService userDetailsService;
 
-    public SecurityConfig(UserRepository userRepository, ApplicationContext applicationContext, AuthenticationProvider authenticationProvider) {
+    public SecurityConfig(UserRepository userRepository, ApplicationContext applicationContext, AuthenticationProvider authenticationProvider, JwtService jwtService, UserDetailsService userDetailsService) {
         this.userRepository = userRepository;
         this.applicationContext = applicationContext;
         this.authenticationProvider = authenticationProvider;
+        this.jwtService = jwtService;
+        this.userDetailsService = userDetailsService;
     }
 
     @Bean
@@ -84,7 +89,7 @@ public class SecurityConfig {
 
     @Bean
     public JwtAuthenticationFilter jwtAuthenticationFilter() {
-        return new JwtAuthenticationFilter();
+        return new JwtAuthenticationFilter(jwtService, userDetailsService);
     }
 
     @Bean

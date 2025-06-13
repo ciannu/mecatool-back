@@ -21,7 +21,10 @@ COPY src ./src
 RUN ./mvnw package -DskipTests
 
 # Expose the port the app runs on
-EXPOSE 9090
+EXPOSE ${PORT:-9090}
+
+# Set environment variables
+ENV SPRING_PROFILES_ACTIVE=prod
 
 # Command to run the application
 ENTRYPOINT ["java", "-jar", "target/mecatool-0.0.1-SNAPSHOT.jar"] 

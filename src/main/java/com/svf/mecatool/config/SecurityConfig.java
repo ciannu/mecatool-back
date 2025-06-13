@@ -4,6 +4,7 @@ import com.svf.mecatool.integration.repositories.UserRepository;
 import com.svf.mecatool.security.details.CustomUserDetails;
 import com.svf.mecatool.security.jwt.JwtAuthenticationFilter;
 import com.svf.mecatool.security.jwt.JwtService;
+import com.svf.mecatool.security.CustomAuthenticationEntryPoint;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -34,10 +35,12 @@ public class SecurityConfig {
 
     private final UserRepository userRepository;
     private final JwtService jwtService;
+    private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
-    public SecurityConfig(UserRepository userRepository, JwtService jwtService) {
+    public SecurityConfig(UserRepository userRepository, JwtService jwtService, CustomAuthenticationEntryPoint customAuthenticationEntryPoint) {
         this.userRepository = userRepository;
         this.jwtService = jwtService;
+        this.customAuthenticationEntryPoint = customAuthenticationEntryPoint;
     }
 
     @Bean
@@ -75,6 +78,7 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
+            .exceptionHandling(exception -> exception.authenticationEntryPoint(customAuthenticationEntryPoint))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/auth/**").permitAll()
                 .requestMatchers("/roles/**").hasRole("ADMIN")
@@ -107,4 +111,4 @@ public class SecurityConfig {
         source.registerCorsConfiguration("/**", configuration);
         return source;
     }
-} 
+}

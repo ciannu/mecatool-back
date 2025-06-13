@@ -282,9 +282,8 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         dto.setInventoryItemId(item.getInventoryItem().getId());
         dto.setQuantity(item.getQuantity());
         dto.setPrice(item.getPrice());
-        if (item.getInventoryItem() != null) {
-            dto.setInventoryItem(InventoryItemMapper.toDTO(item.getInventoryItem()));
-        }
+        // Map the full InventoryItem to InventoryItemDTO for frontend display
+        dto.setInventoryItem(InventoryItemMapper.toDTO(item.getInventoryItem()));
         return dto;
     }
 }

@@ -23,6 +23,11 @@ public class JwtService {
     @Value("${jwt.secret-key}")
     private String secretKey;
 
+    public JwtService(@Value("${jwt.secret-key}") String secretKey) {
+        this.secretKey = secretKey;
+        System.out.println("JWT Secret Key (from JwtService): " + secretKey);
+    }
+
     public String extractUsername(String token) {
         return extractClaim(token, Claims::getSubject);
     }

@@ -81,6 +81,7 @@ public class WorkOrderController {
     }
 
     @PostMapping("/{id}/items")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<WorkOrderItemDTO> addWorkOrderItem(
             @PathVariable Long id,
             @RequestBody WorkOrderItemDTO item

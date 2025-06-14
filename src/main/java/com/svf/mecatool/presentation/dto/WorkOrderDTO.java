@@ -15,6 +15,7 @@ import java.util.List;
 public class WorkOrderDTO {
     private Long id;
     private Long vehicleId;
+    private VehicleDTO vehicle;
     private String description;
     private WorkOrderStatus status;
     private LocalDate startDate;

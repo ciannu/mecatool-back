@@ -18,6 +18,9 @@ public interface WorkOrderService {
     WorkOrderDTO updateStatus(Long id, WorkOrderStatus newStatus);
     WorkOrderDTO assignMechanics(Long id, List<Long> mechanicIds);
 
+    // New method for client history
+    List<WorkOrderDTO> getWorkOrdersByClientId(Long clientId);
+
     // Work Order Items methods
     List<WorkOrderItemDTO> getWorkOrderItems(Long workOrderId);
     WorkOrderItemDTO addWorkOrderItem(Long workOrderId, WorkOrderItemDTO item);

@@ -14,6 +14,8 @@ public interface WorkOrderRepository extends JpaRepository<WorkOrder, Long> {
 
     List<WorkOrder> findByVehicle_Id(Long vehicleId);
 
+    List<WorkOrder> findByVehicle_IdIn(List<Long> vehicleIds);
+
     @Query("SELECT w FROM WorkOrder w JOIN w.mechanics m WHERE m.id = :mechanicId")
     List<WorkOrder> findByMechanicId(@Param("mechanicId") Long mechanicId);
 }

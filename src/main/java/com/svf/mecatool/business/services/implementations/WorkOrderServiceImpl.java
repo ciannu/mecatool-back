@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import com.svf.mecatool.integration.repositories.InventoryItemRepository;
 import com.svf.mecatool.presentation.dto.InventoryItemDTO;
 import com.svf.mecatool.integration.mappers.InventoryItemMapper;
+import com.svf.mecatool.integration.mappers.VehicleMapper;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -121,10 +122,27 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         return result.stream().map(this::mapToDTO).collect(Collectors.toList());
     }
 
+    @Override
+    public List<WorkOrderDTO> getWorkOrdersByClientId(Long clientId) {
+        List<Vehicle> clientVehicles = vehicleRepository.findByClientId(clientId);
+        List<Long> vehicleIds = clientVehicles.stream()
+                                        .map(Vehicle::getId)
+                                        .collect(Collectors.toList());
+        
+        // Get work orders for all these vehicles. Assuming a method like findByVehicle_IdIn or similar
+        // If not, we'd need to add a custom query to WorkOrderRepository.
+        List<WorkOrder> workOrders = workOrderRepository.findByVehicle_IdIn(vehicleIds);
+
+        return workOrders.stream()
+                         .map(this::mapToDTO)
+                         .collect(Collectors.toList());
+    }
+
     private WorkOrderDTO mapToDTO(WorkOrder entity) {
         WorkOrderDTO dto = new WorkOrderDTO();
         dto.setId(entity.getId());
         dto.setVehicleId(entity.getVehicle().getId());
+        dto.setVehicle(VehicleMapper.toDTO(entity.getVehicle()));
         dto.setDescription(entity.getDescription());
         dto.setStatus(entity.getStatus());
         dto.setStartDate(entity.getStartDate());

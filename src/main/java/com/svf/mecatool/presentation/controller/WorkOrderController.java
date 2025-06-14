@@ -4,7 +4,8 @@ import com.svf.mecatool.business.services.WorkOrderService;
 import com.svf.mecatool.integration.model.WorkOrderStatus;
 import com.svf.mecatool.presentation.dto.WorkOrderDTO;
 import com.svf.mecatool.presentation.dto.WorkOrderItemDTO;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -14,31 +15,37 @@ import java.util.Optional;
 
 @RestController
 @RequestMapping("/work-orders")
+@RequiredArgsConstructor
 @CrossOrigin
 public class WorkOrderController {
 
-    @Autowired
-    private WorkOrderService workOrderService;
+    private final WorkOrderService workOrderService;
 
     @GetMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECHANIC', 'CLIENT')")
     public List<WorkOrderDTO> getAll() {
         return workOrderService.getAllWorkOrders();
     }
 
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECHANIC', 'CLIENT')")
     public ResponseEntity<WorkOrderDTO> getById(@PathVariable Long id) {
         return ResponseEntity.of(Optional.ofNullable(workOrderService.getWorkOrderById(id)));
     }
 
     @PostMapping
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECHANIC')")
     public ResponseEntity<WorkOrderDTO> create(@RequestBody WorkOrderDTO dto) {
-        return ResponseEntity.ok(workOrderService.createWorkOrder(dto));
+        WorkOrderDTO newWorkOrder = workOrderService.createWorkOrder(dto);
+        return new ResponseEntity<>(newWorkOrder, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECHANIC')")
     public ResponseEntity<WorkOrderDTO> update(@PathVariable Long id, @RequestBody WorkOrderDTO dto) {
         if (!id.equals(dto.getId())) return ResponseEntity.badRequest().build();
-        return ResponseEntity.ok(workOrderService.updateWorkOrder(id, dto));
+        WorkOrderDTO updatedWorkOrder = workOrderService.updateWorkOrder(id, dto);
+        return ResponseEntity.ok(updatedWorkOrder);
     }
 
     @DeleteMapping("/{id}")
@@ -58,20 +65,24 @@ public class WorkOrderController {
         return ResponseEntity.ok(filtered);
     }
 
-    @PatchMapping("/{id}/status")
+    @PutMapping("/{id}/status")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECHANIC')")
     public ResponseEntity<WorkOrderDTO> updateStatus(
             @PathVariable Long id,
             @RequestParam WorkOrderStatus status
     ) {
-        return ResponseEntity.ok(workOrderService.updateStatus(id, status));
+        WorkOrderDTO updated = workOrderService.updateStatus(id, status);
+        return ResponseEntity.ok(updated);
     }
 
-    @PatchMapping("/{id}/mechanics")
+    @PutMapping("/{id}/assign-mechanics")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECHANIC')")
     public ResponseEntity<WorkOrderDTO> assignMechanics(
             @PathVariable Long id,
             @RequestBody List<Long> mechanicIds
     ) {
-        return ResponseEntity.ok(workOrderService.assignMechanics(id, mechanicIds));
+        WorkOrderDTO updated = workOrderService.assignMechanics(id, mechanicIds);
+        return ResponseEntity.ok(updated);
     }
 
     // Work Order Items endpoints
@@ -81,12 +92,12 @@ public class WorkOrderController {
     }
 
     @PostMapping("/{id}/items")
-    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<WorkOrderItemDTO> addWorkOrderItem(
             @PathVariable Long id,
             @RequestBody WorkOrderItemDTO item
     ) {
-        return ResponseEntity.ok(workOrderService.addWorkOrderItem(id, item));
+        WorkOrderItemDTO addedItem = workOrderService.addWorkOrderItem(id, item);
+        return new ResponseEntity<>(addedItem, HttpStatus.CREATED);
     }
 
     @PutMapping("/{id}/items/{itemId}")
@@ -96,17 +107,25 @@ public class WorkOrderController {
             @RequestBody WorkOrderItemDTO item
     ) {
         if (!itemId.equals(item.getId())) return ResponseEntity.badRequest().build();
-        return ResponseEntity.ok(workOrderService.updateWorkOrderItem(id, itemId, item));
+        WorkOrderItemDTO updatedItem = workOrderService.updateWorkOrderItem(id, itemId, item);
+        return ResponseEntity.ok(updatedItem);
     }
 
     @DeleteMapping("/{id}/items/{itemId}")
-    @PreAuthorize("hasRole('ADMIN') or hasRole('MECHANIC')")
     public ResponseEntity<Void> deleteWorkOrderItem(
             @PathVariable Long id,
             @PathVariable Long itemId
     ) {
         workOrderService.deleteWorkOrderItem(id, itemId);
         return ResponseEntity.noContent().build();
+    }
+
+    // New endpoint for client history
+    @GetMapping("/client/{clientId}")
+    @PreAuthorize("hasRole('ADMIN') or @securityService.isCurrentUserClient(authentication, #clientId)")
+    public ResponseEntity<List<WorkOrderDTO>> getWorkOrdersByClientId(@PathVariable Long clientId) {
+        List<WorkOrderDTO> workOrders = workOrderService.getWorkOrdersByClientId(clientId);
+        return ResponseEntity.ok(workOrders);
     }
 
 }

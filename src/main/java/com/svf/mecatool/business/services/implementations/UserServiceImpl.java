@@ -7,6 +7,8 @@ import com.svf.mecatool.integration.model.User;
 import com.svf.mecatool.integration.repositories.RoleRepository;
 import com.svf.mecatool.integration.repositories.UserRepository;
 import com.svf.mecatool.presentation.dto.UserDTO;
+import com.svf.mecatool.presentation.dto.UserPasswordUpdateDTO;
+import com.svf.mecatool.presentation.dto.UserProfileUpdateDTO;
 import com.svf.mecatool.presentation.dto.UserRegisterDTO;
 import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
@@ -75,12 +77,6 @@ public class UserServiceImpl implements UserService {
             existingUser.setRole(newRole);
         }
 
-        // Password update should be handled separately for security, or with current password confirmation
-        // For simplicity, if a new password is provided in DTO, encode and set it
-        // if (userDTO.getPassword() != null && !userDTO.getPassword().isEmpty()) {
-        //    existingUser.setPassword(passwordEncoder.encode(userDTO.getPassword()));
-        // }
-
         User updatedUser = userRepository.save(existingUser);
         return UserMapper.toDTO(updatedUser);
     }
@@ -98,5 +94,31 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findByEmailIgnoreCase(email)
                 .orElseThrow(() -> new EntityNotFoundException("User not found"));
         return UserMapper.toDTO(user);
+    }
+
+    @Override
+    public UserDTO updateProfile(Long id, UserProfileUpdateDTO userProfileUpdateDTO) {
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        existingUser.setFirstName(userProfileUpdateDTO.getFirstName());
+        existingUser.setLastName(userProfileUpdateDTO.getLastName());
+        existingUser.setEmail(userProfileUpdateDTO.getEmail());
+
+        User updatedUser = userRepository.save(existingUser);
+        return UserMapper.toDTO(updatedUser);
+    }
+
+    @Override
+    public void changePassword(Long id, UserPasswordUpdateDTO userPasswordUpdateDTO) {
+        User existingUser = userRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("User not found"));
+
+        if (!passwordEncoder.matches(userPasswordUpdateDTO.getCurrentPassword(), existingUser.getPassword())) {
+            throw new IllegalArgumentException("Current password does not match");
+        }
+
+        existingUser.setPassword(passwordEncoder.encode(userPasswordUpdateDTO.getNewPassword()));
+        userRepository.save(existingUser);
     }
 } 

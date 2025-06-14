@@ -2,6 +2,8 @@ package com.svf.mecatool.presentation.controller;
 
 import com.svf.mecatool.business.services.UserService;
 import com.svf.mecatool.presentation.dto.UserDTO;
+import com.svf.mecatool.presentation.dto.UserPasswordUpdateDTO;
+import com.svf.mecatool.presentation.dto.UserProfileUpdateDTO;
 import com.svf.mecatool.presentation.dto.UserRegisterDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -45,6 +47,20 @@ public class UserController {
     public ResponseEntity<UserDTO> updateUser(@PathVariable Long id, @RequestBody UserDTO userDTO) {
         UserDTO updatedUser = userService.updateUser(id, userDTO);
         return ResponseEntity.ok(updatedUser);
+    }
+
+    @PutMapping("/{id}/profile")
+    @PreAuthorize("hasRole('ADMIN') or @securityService.isCurrentUser(authentication, #id)")
+    public ResponseEntity<UserDTO> updateProfile(@PathVariable Long id, @RequestBody UserProfileUpdateDTO userProfileUpdateDTO) {
+        UserDTO updatedProfile = userService.updateProfile(id, userProfileUpdateDTO);
+        return ResponseEntity.ok(updatedProfile);
+    }
+
+    @PutMapping("/{id}/password")
+    @PreAuthorize("hasRole('ADMIN') or @securityService.isCurrentUser(authentication, #id)")
+    public ResponseEntity<Void> changePassword(@PathVariable Long id, @RequestBody UserPasswordUpdateDTO userPasswordUpdateDTO) {
+        userService.changePassword(id, userPasswordUpdateDTO);
+        return ResponseEntity.noContent().build();
     }
 
     @DeleteMapping("/{id}")

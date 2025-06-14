@@ -128,4 +128,19 @@ public class WorkOrderController {
         return ResponseEntity.ok(workOrders);
     }
 
+    @GetMapping("/total")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECHANIC')")
+    public ResponseEntity<Long> getTotalWorkOrders() {
+        long totalWorkOrders = workOrderService.getTotalWorkOrders();
+        return ResponseEntity.ok(totalWorkOrders);
+    }
+
+    @GetMapping("/latest")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECHANIC')")
+    public ResponseEntity<WorkOrderDTO> getLatestWorkOrder() {
+        Optional<WorkOrderDTO> latestWorkOrder = workOrderService.getLatestWorkOrder();
+        return latestWorkOrder.map(ResponseEntity::ok)
+                              .orElseGet(() -> ResponseEntity.notFound().build());
+    }
+
 }

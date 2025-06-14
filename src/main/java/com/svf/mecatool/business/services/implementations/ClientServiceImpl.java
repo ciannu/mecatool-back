@@ -67,4 +67,14 @@ public class ClientServiceImpl implements ClientService {
         return vehicleRepository.findByClientId(clientId);
     }
 
+    @Override
+    public long getTotalClients() {
+        return clientRepository.count();
+    }
+
+    @Override
+    public Optional<Client> getLatestClient() {
+        return clientRepository.findTopByOrderByIdDesc();
+    }
+
 }

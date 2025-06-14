@@ -103,4 +103,15 @@ public class VehicleServiceImpl implements VehicleService {
                 .map(VehicleMapper::toDTO)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public long getTotalVehicles() {
+        return vehicleRepository.count();
+    }
+
+    @Override
+    public Optional<VehicleDTO> getLatestVehicle() {
+        return vehicleRepository.findTopByOrderByIdDesc()
+                .map(VehicleMapper::toDTO);
+    }
 }

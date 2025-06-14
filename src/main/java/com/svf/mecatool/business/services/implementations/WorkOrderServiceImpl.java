@@ -21,6 +21,7 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
 @Transactional
@@ -303,5 +304,16 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         // Map the full InventoryItem to InventoryItemDTO for frontend display
         dto.setInventoryItem(InventoryItemMapper.toDTO(item.getInventoryItem()));
         return dto;
+    }
+
+    @Override
+    public long getTotalWorkOrders() {
+        return workOrderRepository.count();
+    }
+
+    @Override
+    public Optional<WorkOrderDTO> getLatestWorkOrder() {
+        return workOrderRepository.findTopByOrderByStartDateDesc()
+                .map(this::mapToDTO);
     }
 }

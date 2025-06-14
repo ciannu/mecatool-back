@@ -91,4 +91,19 @@ public class ClientController {
             return ResponseEntity.notFound().build();
         }
     }
+
+    @GetMapping("/total")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECHANIC')")
+    public ResponseEntity<Long> getTotalClients() {
+        long totalClients = clientService.getTotalClients();
+        return ResponseEntity.ok(totalClients);
+    }
+
+    @GetMapping("/latest")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECHANIC')")
+    public ResponseEntity<Client> getLatestClient() {
+        Optional<Client> latestClient = clientService.getLatestClient();
+        return latestClient.map(ResponseEntity::ok)
+                           .orElseGet(() -> ResponseEntity.notFound().build());
+    }
 }

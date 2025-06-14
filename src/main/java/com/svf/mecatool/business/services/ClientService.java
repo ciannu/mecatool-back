@@ -15,4 +15,6 @@ public interface ClientService {
     Client updateClient(Client updatedClient);
     List<Client> searchClients(String query);
     List<Vehicle> getClientVehicles(Long clientId);
+    long getTotalClients();
+    Optional<Client> getLatestClient();
 }

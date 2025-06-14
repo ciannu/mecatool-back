@@ -5,6 +5,7 @@ import com.svf.mecatool.presentation.dto.WorkOrderDTO;
 import com.svf.mecatool.presentation.dto.WorkOrderItemDTO;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface WorkOrderService {
 
@@ -26,4 +27,6 @@ public interface WorkOrderService {
     WorkOrderItemDTO addWorkOrderItem(Long workOrderId, WorkOrderItemDTO item);
     WorkOrderItemDTO updateWorkOrderItem(Long workOrderId, Long itemId, WorkOrderItemDTO item);
     void deleteWorkOrderItem(Long workOrderId, Long itemId);
+    long getTotalWorkOrders();
+    Optional<WorkOrderDTO> getLatestWorkOrder();
 }

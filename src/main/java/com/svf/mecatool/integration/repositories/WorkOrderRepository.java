@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.util.List;
+import java.util.Optional;
 
 public interface WorkOrderRepository extends JpaRepository<WorkOrder, Long> {
 
@@ -18,4 +19,6 @@ public interface WorkOrderRepository extends JpaRepository<WorkOrder, Long> {
 
     @Query("SELECT w FROM WorkOrder w JOIN w.mechanics m WHERE m.id = :mechanicId")
     List<WorkOrder> findByMechanicId(@Param("mechanicId") Long mechanicId);
+
+    Optional<WorkOrder> findTopByOrderByStartDateDesc();
 }

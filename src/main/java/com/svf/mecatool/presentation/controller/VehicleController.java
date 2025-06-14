@@ -95,4 +95,19 @@ public class VehicleController {
         List<VehicleDTO> vehicles = vehicleService.searchVehicles(query != null ? query : "");
         return ResponseEntity.ok(vehicles);
     }
+
+    @GetMapping("/total")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECHANIC')")
+    public ResponseEntity<Long> getTotalVehicles() {
+        long totalVehicles = vehicleService.getTotalVehicles();
+        return ResponseEntity.ok(totalVehicles);
+    }
+
+    @GetMapping("/latest")
+    @PreAuthorize("hasAnyRole('ADMIN', 'MECHANIC')")
+    public ResponseEntity<VehicleDTO> getLatestVehicle() {
+        Optional<VehicleDTO> latestVehicle = vehicleService.getLatestVehicle();
+        return latestVehicle.map(ResponseEntity::ok)
+                            .orElseGet(() -> ResponseEntity.notFound().build());
+    }
 }

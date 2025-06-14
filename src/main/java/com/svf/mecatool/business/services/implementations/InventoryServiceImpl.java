@@ -182,7 +182,8 @@ public class InventoryServiceImpl implements InventoryService {
         if (item.getQuantity() <= item.getMinStock()) {
             String message = String.format("Low stock alert: Item '%s' (ID: %d) quantity is %d, below minimum stock of %d.", 
                                             item.getName(), item.getId(), item.getQuantity(), item.getMinStock());
-            notificationService.createNotification(NotificationType.LOW_STOCK, message, item.getId(), "InventoryItem");
+            Integer systemUserId = 1; 
+            notificationService.createNotification(NotificationType.LOW_STOCK, message, systemUserId, item.getId(), "InventoryItem");
         }
     }
 } 

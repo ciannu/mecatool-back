@@ -18,6 +18,8 @@ import com.svf.mecatool.integration.mappers.InventoryItemMapper;
 import com.svf.mecatool.integration.mappers.VehicleMapper;
 import com.svf.mecatool.business.services.NotificationService;
 import com.svf.mecatool.integration.model.Notification.NotificationType;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -62,12 +64,24 @@ public class WorkOrderServiceImpl implements WorkOrderService {
 
         WorkOrder saved = workOrderRepository.save(workOrder);
 
+        // Get current authenticated user's ID
+        Integer currentUserId = null;
+        Object principal = SecurityContextHolder.getContext().getAuthentication().getPrincipal();
+        if (principal instanceof UserDetails) {
+            // Assuming your UserDetails implementation has a method to get the ID, or you can cast to your custom User class
+            // For simplicity, let's assume the username is the ID for now, or you have a custom User object
+            // For a real application, you'd likely have a custom UserDetails object with an ID field.
+            // For example: currentUserId = ((MyCustomUser) principal).getId();
+            // For now, setting to 1 as a placeholder if a proper user ID isn't easily accessible from UserDetails
+            currentUserId = 1; // Placeholder: Replace with actual logic to get authenticated user ID
+        }
+
         // Create notification for new work order
         String notificationMessage = String.format("New Work Order created for vehicle %s (%s). Description: %s.",
                                                 vehicle.getBrand() + " " + vehicle.getModel(),
                                                 vehicle.getLicensePlate(),
                                                 dto.getDescription());
-        notificationService.createNotification(NotificationType.NEW_WORK_ORDER, notificationMessage, saved.getId(), "WorkOrder");
+        notificationService.createNotification(NotificationType.NEW_WORK_ORDER, notificationMessage, currentUserId, saved.getId(), "WorkOrder");
 
         return mapToDTO(saved);
     }

@@ -37,8 +37,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         System.out.println("\n=== JwtAuthenticationFilter ===");
         System.out.println("Request URI: " + request.getRequestURI());
 
-        if (request.getServletPath().startsWith("/auth")) {
-            System.out.println("Skipping JWT filter for /auth endpoint.");
+        // Publicly accessible paths (e.g., auth, swagger)
+        if (request.getServletPath().startsWith("/auth") ||
+            request.getServletPath().startsWith("/v3/api-docs") ||
+            request.getServletPath().startsWith("/swagger-ui")) {
+            System.out.println("Skipping JWT filter for public endpoint: " + request.getServletPath());
             filterChain.doFilter(request, response);
             return;
         }

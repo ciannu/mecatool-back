@@ -25,7 +25,7 @@ public class JwtService {
 
     public JwtService(@Value("${jwt.secret-key}") String secretKey) {
         this.secretKey = secretKey;
-        System.out.println("JWT Secret Key (from JwtService): " + secretKey);
+        System.out.println("DEBUG: JWT Secret Key loaded by JwtService: " + secretKey);
     }
 
     public String extractUsername(String token) {

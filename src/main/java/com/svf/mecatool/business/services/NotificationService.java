@@ -1,16 +1,14 @@
 package com.svf.mecatool.business.services;
 
-import com.svf.mecatool.presentation.dto.NotificationDTO;
+import com.svf.mecatool.integration.model.Notification;
+import com.svf.mecatool.integration.model.Notification.NotificationType;
+
 import java.util.List;
 
 public interface NotificationService {
-    NotificationDTO createNotification(NotificationDTO notificationDTO);
-    List<NotificationDTO> getUserNotifications(Integer userId);
-    List<NotificationDTO> getUnreadUserNotifications(Integer userId);
-    NotificationDTO markAsRead(Long notificationId);
-    void markAllAsRead(Integer userId);
+    Notification createNotification(NotificationType type, String message, Long relatedEntityId, String relatedEntityType);
+    List<Notification> getAllNotifications();
+    List<Notification> getUnreadNotifications();
+    Notification markAsRead(Long notificationId);
     void deleteNotification(Long notificationId);
-    void sendDeliveryReminder(Integer userId, String deliveryDetails);
-    void sendMaintenanceReminder(Integer userId, String maintenanceDetails);
-    void sendPaymentReminder(Integer userId, String paymentDetails);
 } 

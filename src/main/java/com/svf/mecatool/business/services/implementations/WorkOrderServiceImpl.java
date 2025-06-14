@@ -16,6 +16,8 @@ import com.svf.mecatool.integration.repositories.InventoryItemRepository;
 import com.svf.mecatool.presentation.dto.InventoryItemDTO;
 import com.svf.mecatool.integration.mappers.InventoryItemMapper;
 import com.svf.mecatool.integration.mappers.VehicleMapper;
+import com.svf.mecatool.business.services.NotificationService;
+import com.svf.mecatool.integration.model.Notification.NotificationType;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -33,6 +35,7 @@ public class WorkOrderServiceImpl implements WorkOrderService {
     private final MechanicRepository mechanicRepository;
     private final WorkOrderItemRepository workOrderItemRepository;
     private final InventoryItemRepository inventoryItemRepository;
+    private final NotificationService notificationService;
 
     private void calculateAndSetWorkOrderTotal(WorkOrder workOrder) {
         BigDecimal total = workOrder.getItems().stream()
@@ -58,6 +61,14 @@ public class WorkOrderServiceImpl implements WorkOrderService {
         workOrder.setMechanics(mechanics);
 
         WorkOrder saved = workOrderRepository.save(workOrder);
+
+        // Create notification for new work order
+        String notificationMessage = String.format("New Work Order created for vehicle %s (%s). Description: %s.",
+                                                vehicle.getBrand() + " " + vehicle.getModel(),
+                                                vehicle.getLicensePlate(),
+                                                dto.getDescription());
+        notificationService.createNotification(NotificationType.NEW_WORK_ORDER, notificationMessage, saved.getId(), "WorkOrder");
+
         return mapToDTO(saved);
     }
 

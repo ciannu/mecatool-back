@@ -21,17 +21,18 @@ public class Notification {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "user_id", nullable = false)
+    @Column(name = "user_id", nullable = true)
     private Integer userId;
 
-    @Column(nullable = false)
+    @Column(nullable = true)
     private String title;
 
     @Column(nullable = false, columnDefinition = "TEXT")
     private String message;
 
+    @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private String type;
+    private NotificationType type;
 
     @Column(name = "is_read", nullable = false)
     private Boolean isRead;
@@ -44,13 +45,19 @@ public class Notification {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // Optional: Link to related entity
+    private Long relatedEntityId;
+    private String relatedEntityType;
+
     @PrePersist
     public void prePersist() {
-        if (type == null) {
-            type = "info";
-        }
         if (isRead == null) {
             isRead = false;
         }
+    }
+
+    public enum NotificationType {
+        LOW_STOCK,
+        NEW_WORK_ORDER
     }
 } 

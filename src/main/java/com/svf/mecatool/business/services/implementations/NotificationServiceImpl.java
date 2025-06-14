@@ -2,123 +2,64 @@ package com.svf.mecatool.business.services.implementations;
 
 import com.svf.mecatool.business.services.NotificationService;
 import com.svf.mecatool.integration.model.Notification;
+import com.svf.mecatool.integration.model.Notification.NotificationType;
 import com.svf.mecatool.integration.repositories.NotificationRepository;
-import com.svf.mecatool.presentation.dto.NotificationDTO;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 @Service
+@Transactional
+@RequiredArgsConstructor
 public class NotificationServiceImpl implements NotificationService {
 
     private final NotificationRepository notificationRepository;
 
-    @Autowired
-    public NotificationServiceImpl(NotificationRepository notificationRepository) {
-        this.notificationRepository = notificationRepository;
-    }
-
     @Override
-    @Transactional
-    public NotificationDTO createNotification(NotificationDTO notificationDTO) {
+    public Notification createNotification(NotificationType type, String message, Long relatedEntityId, String relatedEntityType) {
         Notification notification = new Notification();
-        notification.setUserId(notificationDTO.getUserId());
-        notification.setTitle(notificationDTO.getTitle());
-        notification.setMessage(notificationDTO.getMessage());
-        notification.setType(notificationDTO.getType());
+        notification.setType(type);
+        notification.setMessage(message);
         notification.setIsRead(false);
-
-        Notification savedNotification = notificationRepository.save(notification);
-        return convertToDTO(savedNotification);
+        notification.setRelatedEntityId(relatedEntityId);
+        notification.setRelatedEntityType(relatedEntityType);
+        return notificationRepository.save(notification);
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<NotificationDTO> getUserNotifications(Integer userId) {
-        return notificationRepository.findByUserIdOrderByCreatedAtDesc(userId)
-                .stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public List<Notification> getAllNotifications() {
+        return notificationRepository.findByOrderByTimestampDesc();
     }
 
     @Override
     @Transactional(readOnly = true)
-    public List<NotificationDTO> getUnreadUserNotifications(Integer userId) {
-        return notificationRepository.findByUserIdAndIsReadOrderByCreatedAtDesc(userId, false)
-                .stream()
-                .map(this::convertToDTO)
-                .collect(Collectors.toList());
+    public List<Notification> getUnreadNotifications() {
+        return notificationRepository.findByIsReadFalseOrderByTimestampDesc();
     }
 
     @Override
-    @Transactional
-    public NotificationDTO markAsRead(Long notificationId) {
-        Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new RuntimeException("Notification not found"));
-        notification.setIsRead(true);
-        return convertToDTO(notificationRepository.save(notification));
+    public Notification markAsRead(Long notificationId) {
+        Optional<Notification> notificationOptional = notificationRepository.findById(notificationId);
+        if (notificationOptional.isPresent()) {
+            Notification notification = notificationOptional.get();
+            notification.setIsRead(true);
+            return notificationRepository.save(notification);
+        } else {
+            throw new RuntimeException("Notification not found with ID: " + notificationId);
+        }
     }
 
     @Override
-    @Transactional
-    public void markAllAsRead(Integer userId) {
-        List<Notification> unreadNotifications = notificationRepository.findByUserIdAndIsReadOrderByCreatedAtDesc(userId, false);
-        unreadNotifications.forEach(notification -> notification.setIsRead(true));
-        notificationRepository.saveAll(unreadNotifications);
-    }
-
-    @Override
-    @Transactional
     public void deleteNotification(Long notificationId) {
-        notificationRepository.deleteById(notificationId);
+        if (notificationRepository.existsById(notificationId)) {
+            notificationRepository.deleteById(notificationId);
+        } else {
+            throw new RuntimeException("Notification not found with ID: " + notificationId);
+        }
     }
-
-    @Override
-    @Transactional
-    public void sendDeliveryReminder(Integer userId, String deliveryDetails) {
-        NotificationDTO notification = new NotificationDTO();
-        notification.setUserId(userId);
-        notification.setTitle("Delivery Reminder");
-        notification.setMessage(deliveryDetails);
-        notification.setType("delivery");
-        createNotification(notification);
-    }
-
-    @Override
-    @Transactional
-    public void sendMaintenanceReminder(Integer userId, String maintenanceDetails) {
-        NotificationDTO notification = new NotificationDTO();
-        notification.setUserId(userId);
-        notification.setTitle("Maintenance Reminder");
-        notification.setMessage(maintenanceDetails);
-        notification.setType("maintenance");
-        createNotification(notification);
-    }
-
-    @Override
-    @Transactional
-    public void sendPaymentReminder(Integer userId, String paymentDetails) {
-        NotificationDTO notification = new NotificationDTO();
-        notification.setUserId(userId);
-        notification.setTitle("Payment Reminder");
-        notification.setMessage(paymentDetails);
-        notification.setType("payment");
-        createNotification(notification);
-    }
-
-    private NotificationDTO convertToDTO(Notification notification) {
-        NotificationDTO dto = new NotificationDTO();
-        dto.setId(notification.getId());
-        dto.setUserId(notification.getUserId());
-        dto.setTitle(notification.getTitle());
-        dto.setMessage(notification.getMessage());
-        dto.setType(notification.getType());
-        dto.setIsRead(notification.getIsRead());
-        dto.setCreatedAt(notification.getCreatedAt());
-        dto.setUpdatedAt(notification.getUpdatedAt());
-        return dto;
-    }
-} 
+}

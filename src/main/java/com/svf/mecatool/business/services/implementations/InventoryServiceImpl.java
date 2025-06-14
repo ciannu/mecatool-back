@@ -9,6 +9,8 @@ import jakarta.persistence.PersistenceContext;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import com.svf.mecatool.business.services.NotificationService;
+import com.svf.mecatool.integration.model.Notification.NotificationType;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
@@ -21,8 +23,13 @@ public class InventoryServiceImpl implements InventoryService {
     @Autowired
     private InventoryItemRepository inventoryItemRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @PersistenceContext
     private EntityManager entityManager;
+
+    private static final int LOW_STOCK_THRESHOLD = 5; // Define your low stock threshold
 
     @Override
     public List<InventoryItemDTO> getAllItems() {
@@ -61,6 +68,9 @@ public class InventoryServiceImpl implements InventoryService {
         
         System.out.println("Found existing item: " + existingItem);
         
+        // Store old quantity to check for stock changes
+        int oldQuantity = existingItem.getQuantity();
+
         // Update all fields
         existingItem.setName(itemDTO.getName());
         existingItem.setCategory(itemDTO.getCategory());
@@ -77,6 +87,9 @@ public class InventoryServiceImpl implements InventoryService {
         // Save and flush to ensure immediate persistence
         InventoryItem savedItem = inventoryItemRepository.saveAndFlush(existingItem);
         System.out.println("Saved item after update: " + savedItem);
+
+        // Check for low stock after update
+        checkAndNotifyLowStock(savedItem);
         
         return mapToDTO(savedItem);
     }
@@ -144,7 +157,8 @@ public class InventoryServiceImpl implements InventoryService {
         }
 
         item.setQuantity(item.getQuantity() - quantity);
-        inventoryItemRepository.save(item);
+        InventoryItem savedItem = inventoryItemRepository.save(item);
+        checkAndNotifyLowStock(savedItem);
     }
 
     @Override
@@ -153,7 +167,8 @@ public class InventoryServiceImpl implements InventoryService {
                 .orElseThrow(() -> new RuntimeException("Inventory item not found"));
 
         item.setQuantity(item.getQuantity() + quantity);
-        inventoryItemRepository.save(item);
+        InventoryItem savedItem = inventoryItemRepository.save(item);
+        checkAndNotifyLowStock(savedItem);
     }
 
     @Override
@@ -161,5 +176,13 @@ public class InventoryServiceImpl implements InventoryService {
         return inventoryItemRepository.findById(itemId)
                 .map(InventoryItem::getQuantity)
                 .orElse(0);
+    }
+
+    private void checkAndNotifyLowStock(InventoryItem item) {
+        if (item.getQuantity() <= item.getMinStock()) {
+            String message = String.format("Low stock alert: Item '%s' (ID: %d) quantity is %d, below minimum stock of %d.", 
+                                            item.getName(), item.getId(), item.getQuantity(), item.getMinStock());
+            notificationService.createNotification(NotificationType.LOW_STOCK, message, item.getId(), "InventoryItem");
+        }
     }
 } 
